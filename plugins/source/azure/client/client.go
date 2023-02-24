@@ -123,9 +123,17 @@ func New(ctx context.Context, logger zerolog.Logger, s specs.Source, _ source.Op
 		subscriptions: uniqueSubscriptions,
 	}
 
-	c.Creds, err = azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		return nil, err
+	if spec.Credentials == nil {
+		c.Creds, err = azidentity.NewDefaultAzureCredential(nil)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		c.Creds, err = azidentity.NewClientSecretCredential(spec.Credentials.TenantID, spec.Credentials.ClientID,
+			spec.Credentials.ClientSecret, nil)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// if subscription are not specified discover subscriptions with default credentials
