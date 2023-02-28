@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -260,13 +261,18 @@ func configureAwsClient(ctx context.Context, logger zerolog.Logger, awsConfig *S
 		)
 	}
 
-	if account.DefaultRegion != "" {
-		// According to the docs: If multiple WithDefaultRegion calls are made, the last call overrides the previous call values
-		configFns = append(configFns, config.WithDefaultRegion(account.DefaultRegion))
-	}
+	if awsConfig.Credentials != nil {
+		configFns = append(configFns, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(awsConfig.Credentials.AccessKey, awsConfig.Credentials.SecretKey, "")))
 
-	if account.LocalProfile != "" {
-		configFns = append(configFns, config.WithSharedConfigProfile(account.LocalProfile))
+	} else {
+		if account.DefaultRegion != "" {
+			// According to the docs: If multiple WithDefaultRegion calls are made, the last call overrides the previous call values
+			configFns = append(configFns, config.WithDefaultRegion(account.DefaultRegion))
+		}
+
+		if account.LocalProfile != "" {
+			configFns = append(configFns, config.WithSharedConfigProfile(account.LocalProfile))
+		}
 	}
 
 	awsCfg, err = config.LoadDefaultConfig(ctx, configFns...)

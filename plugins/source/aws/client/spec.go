@@ -6,6 +6,11 @@ import (
 	"regexp"
 )
 
+type Creds struct {
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+}
+
 type Account struct {
 	ID              string   `json:"id"`
 	AccountName     string   `json:"account_name,omitempty"`
@@ -41,6 +46,7 @@ type Spec struct {
 	HostnameImmutable *bool     `json:"custom_endpoint_hostname_immutable,omitempty"`
 	PartitionID       string    `json:"custom_endpoint_partition_id,omitempty"`
 	SigningRegion     string    `json:"custom_endpoint_signing_region,omitempty"`
+	Credentials       *Creds    `json:"credentials"`
 }
 
 func (s *Spec) Validate() error {
