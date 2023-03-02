@@ -25,6 +25,7 @@ type Client struct {
 	logger               zerolog.Logger
 	registeredNamespaces map[string]map[string]bool
 	resourceGroups       map[string][]string
+	resourceGroupObjs    map[string][]*armresources.ResourceGroup
 	// this is set by table client multiplexer
 	SubscriptionId string
 	// this is set by table client multiplexer (SubscriptionResourceGroupMultiplexRegisteredNamespace)
@@ -66,6 +67,7 @@ func getResourceGroupNames(resourceGroups []*armresources.ResourceGroup) []strin
 }
 
 func (c *Client) disocverResourceGroups(ctx context.Context) error {
+	c.resourceGroupObjs = make(map[string][]*armresources.ResourceGroup, len(c.subscriptions))
 	c.resourceGroups = make(map[string][]string, len(c.subscriptions))
 	c.registeredNamespaces = make(map[string]map[string]bool, len(c.subscriptions))
 
@@ -84,6 +86,7 @@ func (c *Client) disocverResourceGroups(ctx context.Context) error {
 			if len(page.Value) == 0 {
 				continue
 			}
+			c.resourceGroupObjs[subID] = append(c.resourceGroupObjs[subID], page.Value...)
 			c.resourceGroups[subID] = append(c.resourceGroups[subID], getResourceGroupNames(page.Value)...)
 		}
 
@@ -153,6 +156,15 @@ func New(ctx context.Context, logger zerolog.Logger, s specs.Source, _ source.Op
 	}
 
 	return c, nil
+}
+
+// ResourceGroupObjs returns a copy of all resource group objects
+func (c *Client) ResourceGroupObjs() map[string][]*armresources.ResourceGroup {
+	ret := make(map[string][]*armresources.ResourceGroup, len(c.resourceGroupObjs))
+	for k, v := range c.resourceGroupObjs {
+		ret[k] = append([]*armresources.ResourceGroup{}, v...)
+	}
+	return ret
 }
 
 func (c *Client) Logger() *zerolog.Logger {
