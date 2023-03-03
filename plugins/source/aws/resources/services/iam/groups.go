@@ -17,6 +17,11 @@ func Groups() *schema.Table {
 		Columns: []schema.Column{
 			client.DefaultAccountIDColumn(true),
 			{
+				Name:     "policies_documents",
+				Type:     schema.TypeJSON,
+				Resolver: resolveIamGroupPoliciesDocuments,
+			},
+			{
 				Name:     "policies",
 				Type:     schema.TypeJSON,
 				Resolver: resolveIamGroupPolicies,

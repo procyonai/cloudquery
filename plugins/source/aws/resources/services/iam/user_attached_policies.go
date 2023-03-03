@@ -37,6 +37,11 @@ func UserAttachedPolicies() *schema.Table {
 				Type:     schema.TypeString,
 				Resolver: schema.ParentColumnResolver("id"),
 			},
+			{
+				Name:     "policy_document",
+				Type:     schema.TypeJSON,
+				Resolver: resolveIamUserAttachedPolicyDocument,
+			},
 		},
 	}
 }

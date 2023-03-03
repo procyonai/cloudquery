@@ -2,6 +2,8 @@ package iam
 
 import (
 	"context"
+	"encoding/json"
+	"net/url"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -122,4 +124,34 @@ func fetchIamUserAttachedPolicies(ctx context.Context, meta schema.ClientMeta, p
 		res <- output.AttachedPolicies
 	}
 	return nil
+}
+
+func resolveIamUserAttachedPolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
+	svc := meta.(*client.Client).Services().Iam
+	resourceMap := resource.Item.(types.AttachedPolicy)
+	policyArn := *resourceMap.PolicyArn
+
+	resp, err := svc.GetPolicy(ctx, &iam.GetPolicyInput{PolicyArn: &policyArn})
+	if err != nil {
+		return err
+	}
+	versionId := resp.Policy.DefaultVersionId
+
+	policyResult, err := svc.GetPolicyVersion(ctx, &iam.GetPolicyVersionInput{PolicyArn: &policyArn, VersionId: versionId})
+
+	if err != nil {
+		return err
+	}
+
+	decodedDocument, err := url.QueryUnescape(*policyResult.PolicyVersion.Document)
+	if err != nil {
+		return err
+	}
+
+	var document map[string]any
+	err = json.Unmarshal([]byte(decodedDocument), &document)
+	if err != nil {
+		return err
+	}
+	return resource.Set(c.Name, document)
 }
