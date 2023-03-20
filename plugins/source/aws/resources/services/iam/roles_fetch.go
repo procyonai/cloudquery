@@ -62,6 +62,43 @@ func resolveIamRolePolicies(ctx context.Context, meta schema.ClientMeta, resourc
 	return resource.Set("policies", policies)
 }
 
+func resolveIamRolesPoliciesDocuments(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
+	r := resource.Item.(*types.Role)
+	svc := meta.(*client.Client).Services().Iam
+	config := iam.ListAttachedRolePoliciesInput{
+		RoleName: r.RoleName,
+	}
+	response, err := svc.ListAttachedRolePolicies(ctx, &config)
+	if err != nil {
+		return err
+	}
+	policyMap := make(map[string]*map[string]any)
+	for _, p := range response.AttachedPolicies {
+		resp, err := svc.GetPolicy(ctx, &iam.GetPolicyInput{PolicyArn: p.PolicyArn})
+		if err != nil {
+			continue
+		}
+		policyResult, err := svc.GetPolicyVersion(ctx, &iam.GetPolicyVersionInput{PolicyArn: p.PolicyArn, VersionId: resp.Policy.DefaultVersionId})
+		if err != nil {
+			continue
+		}
+
+		decodedDocument, err := url.QueryUnescape(*policyResult.PolicyVersion.Document)
+		if err != nil {
+			continue
+		}
+
+		var document map[string]any
+		err = json.Unmarshal([]byte(decodedDocument), &document)
+		if err != nil {
+			continue
+		}
+		policyMap[*p.PolicyArn] = &document
+	}
+
+	return resource.Set(c.Name, policyMap)
+}
+
 func resolveRolesAssumeRolePolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
 	r := resource.Item.(*types.Role)
 	if r.AssumeRolePolicyDocument == nil {
