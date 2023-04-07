@@ -4,7 +4,6 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscription"
 	"github.com/cloudquery/plugin-sdk/schema"
 	"github.com/cloudquery/plugin-sdk/transformers"
 )
@@ -18,12 +17,20 @@ func ETagNameTransformer(fld reflect.StructField) (string, error) {
 	return transformers.DefaultNameTransformer(fld)
 }
 
+func CombineTranformers(t ...schema.Transform) schema.Transform {
+	return func(table *schema.Table) error {
+		for _, t := range t {
+			err := t(table)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func WithColumnValueTransformer(column, value string) schema.Transform {
 	return func(table *schema.Table) error {
-		err := transformers.TransformWithStruct(&armsubscription.Subscription{}, transformers.WithPrimaryKeys("ID"))(table)
-		if err != nil {
-			return err
-		}
 		column := schema.Column{
 			Name: column,
 			Type: schema.TypeString,

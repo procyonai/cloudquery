@@ -1,8 +1,10 @@
 package subscription
 
 import (
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscription"
 	"github.com/cloudquery/cloudquery/plugins/source/azure/client"
 	"github.com/cloudquery/plugin-sdk/schema"
+	"github.com/cloudquery/plugin-sdk/transformers"
 )
 
 func Subscriptions() *schema.Table {
@@ -11,8 +13,9 @@ func Subscriptions() *schema.Table {
 		Resolver:    fetchSubscriptions,
 		Description: "https://learn.microsoft.com/en-us/rest/api/resources/subscriptions/list?tabs=HTTP#subscription",
 		Multiplex:   client.SingleSubscriptionMultiplex,
-		Transform:   client.WithColumnValueTransformer("type", "Microsoft.Subscriptions"),
-		Columns:     schema.ColumnList{},
+		Transform: client.CombineTranformers(transformers.TransformWithStruct(&armsubscription.Subscription{}, transformers.WithPrimaryKeys("ID")),
+			client.WithColumnValueTransformer("type", "Microsoft.Subscriptions")),
+		Columns: schema.ColumnList{},
 		Relations: []*schema.Table{
 			locations(),
 		},
