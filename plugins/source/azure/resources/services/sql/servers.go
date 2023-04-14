@@ -22,7 +22,7 @@ func Servers() *schema.Table {
 			server_blob_auditing_policies(),
 			serverAdmins(),
 			serverEncryptionProtectors(),
-			serverDatabases(),
+			ServerDatabases(),
 			virtualNetworkRules(),
 		},
 	}

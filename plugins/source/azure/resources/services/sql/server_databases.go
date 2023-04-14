@@ -7,7 +7,7 @@ import (
 	"github.com/cloudquery/plugin-sdk/transformers"
 )
 
-func serverDatabases() *schema.Table {
+func ServerDatabases() *schema.Table {
 	return &schema.Table{
 		Name:        "azure_sql_server_databases",
 		Resolver:    fetchDatabases,
