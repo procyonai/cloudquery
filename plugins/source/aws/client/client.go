@@ -261,7 +261,7 @@ func configureAwsClient(ctx context.Context, logger zerolog.Logger, awsConfig *S
 		)
 	}
 
-	if awsConfig.Credentials != nil {
+	if awsConfig.Credentials.AccessKey != "" {
 		configFns = append(configFns, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(awsConfig.Credentials.AccessKey, awsConfig.Credentials.SecretKey, "")))
 
 	} else {
@@ -322,9 +322,15 @@ func configureAwsClient(ctx context.Context, logger zerolog.Logger, awsConfig *S
 	}
 
 	// Test out retrieving credentials
-	if _, err := awsCfg.Credentials.Retrieve(ctx); err != nil {
+	accessCred, err := awsCfg.Credentials.Retrieve(ctx)
+	if err != nil {
 		logger.Error().Err(err).Msg("error retrieving credentials")
 		return awsCfg, errRetrievingCredentials
+	}
+
+	if err == nil && account.RoleARN != "" {
+		configFns = append(configFns, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessCred.AccessKeyID, accessCred.SecretAccessKey, accessCred.SessionToken)))
+		awsCfg, err = config.LoadDefaultConfig(ctx, configFns...)
 	}
 
 	return awsCfg, err
