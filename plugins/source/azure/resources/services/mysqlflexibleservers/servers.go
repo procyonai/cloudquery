@@ -14,7 +14,7 @@ func Servers() *schema.Table {
 		Name:        "azure_mysqlflexibleservers_servers",
 		Resolver:    fetchServers,
 		Description: "https://learn.microsoft.com/en-us/rest/api/mysql/flexibleserver/servers/list?tabs=HTTP#server",
-		Multiplex:   client.SubscriptionMultiplexRegisteredNamespace("azure_mysqlflexibleservers_servers", client.Namespacemicrosoft_dbformysql),
+		Multiplex:   client.SubscriptionResourceGroupMultiplexRegisteredNamespace("azure_mysqlflexibleservers_servers", client.Namespacemicrosoft_dbformysql),
 		Transform:   transformers.TransformWithStruct(&armmysqlflexibleservers.Server{}, transformers.WithPrimaryKeys("ID")),
 		Columns:     schema.ColumnList{client.SubscriptionID},
 	}
@@ -26,7 +26,7 @@ func fetchServers(ctx context.Context, meta schema.ClientMeta, parent *schema.Re
 	if err != nil {
 		return err
 	}
-	pager := svc.NewListPager(nil)
+	pager := svc.NewListByResourceGroupPager(cl.ResourceGroup, nil)
 	for pager.More() {
 		p, err := pager.NextPage(ctx)
 		if err != nil {
