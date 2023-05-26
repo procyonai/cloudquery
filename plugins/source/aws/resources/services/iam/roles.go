@@ -18,16 +18,6 @@ func Roles() *schema.Table {
 		Columns: []schema.Column{
 			client.DefaultAccountIDColumn(true),
 			{
-				Name:     "policies",
-				Type:     schema.TypeJSON,
-				Resolver: resolveIamRolePolicies,
-			},
-			{
-				Name:     "policies_documents",
-				Type:     schema.TypeJSON,
-				Resolver: resolveIamRolesPoliciesDocuments,
-			},
-			{
 				Name:     "id",
 				Type:     schema.TypeString,
 				Resolver: schema.PathResolver("RoleId"),
