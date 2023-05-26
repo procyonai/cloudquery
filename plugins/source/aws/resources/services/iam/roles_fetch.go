@@ -151,9 +151,23 @@ func getRolePolicy(ctx context.Context, meta schema.ClientMeta, resource *schema
 }
 
 func resolveRolePoliciesPolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
-	r := resource.Item.(*iam.GetRolePolicyOutput)
+	svc := meta.(*client.Client).Services().Iam
+	resourceMap := resource.Item.(types.AttachedPolicy)
+	policyArn := *resourceMap.PolicyArn
 
-	decodedDocument, err := url.QueryUnescape(*r.PolicyDocument)
+	resp, err := svc.GetPolicy(ctx, &iam.GetPolicyInput{PolicyArn: &policyArn})
+	if err != nil {
+		return err
+	}
+	versionId := resp.Policy.DefaultVersionId
+
+	policyResult, err := svc.GetPolicyVersion(ctx, &iam.GetPolicyVersionInput{PolicyArn: &policyArn, VersionId: versionId})
+
+	if err != nil {
+		return err
+	}
+
+	decodedDocument, err := url.QueryUnescape(*policyResult.PolicyVersion.Document)
 	if err != nil {
 		return err
 	}

@@ -17,9 +17,9 @@ func Groups() *schema.Table {
 		Columns: []schema.Column{
 			client.DefaultAccountIDColumn(true),
 			{
-				Name:     "id",
+				Name:     "arn",
 				Type:     schema.TypeString,
-				Resolver: schema.PathResolver("GroupId"),
+				Resolver: schema.PathResolver("Arn"),
 				CreationOptions: schema.ColumnCreationOptions{
 					PrimaryKey: true,
 				},
@@ -27,7 +27,8 @@ func Groups() *schema.Table {
 		},
 
 		Relations: []*schema.Table{
-			GroupPolicies(),
+			groupAttachedPolicies(),
+			groupPolicies(),
 		},
 	}
 }

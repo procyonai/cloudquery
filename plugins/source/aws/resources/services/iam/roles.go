@@ -38,6 +38,7 @@ func Roles() *schema.Table {
 		},
 
 		Relations: []*schema.Table{
+			roleAttachedPolicies(),
 			RolePolicies(),
 		},
 	}

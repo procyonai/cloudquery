@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/cloudquery/cloudquery/plugins/source/aws/client"
@@ -19,21 +18,16 @@ func fetchIamGroupPolicies(ctx context.Context, meta schema.ClientMeta, parent *
 	config := iam.ListGroupPoliciesInput{
 		GroupName: group.GroupName,
 	}
-	for {
-		output, err := svc.ListGroupPolicies(ctx, &config)
+	paginator := iam.NewListGroupPoliciesPaginator(svc, &config)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			if c.IsNotFoundError(err) {
 				return nil
 			}
 			return err
 		}
-
-		res <- output.PolicyNames
-
-		if aws.ToString(output.Marker) == "" {
-			break
-		}
-		config.Marker = output.Marker
+		res <- page.PolicyNames
 	}
 	return nil
 }
@@ -44,7 +38,9 @@ func getGroupPolicy(ctx context.Context, meta schema.ClientMeta, resource *schem
 	p := resource.Item.(string)
 	group := resource.Parent.Item.(types.Group)
 
-	policyResult, err := svc.GetGroupPolicy(ctx, &iam.GetGroupPolicyInput{PolicyName: &p, GroupName: group.GroupName})
+	policyResult, err := svc.GetGroupPolicy(ctx, &iam.GetGroupPolicyInput{PolicyName: &p, GroupName: group.GroupName}, func(options *iam.Options) {
+		options.Region = c.Region
+	})
 	if err != nil {
 		return err
 	}
@@ -53,9 +49,23 @@ func getGroupPolicy(ctx context.Context, meta schema.ClientMeta, resource *schem
 }
 
 func resolveIamGroupPolicyPolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
-	r := resource.Item.(*iam.GetGroupPolicyOutput)
+	svc := meta.(*client.Client).Services().Iam
+	resourceMap := resource.Item.(types.AttachedPolicy)
+	policyArn := *resourceMap.PolicyArn
 
-	decodedDocument, err := url.QueryUnescape(*r.PolicyDocument)
+	resp, err := svc.GetPolicy(ctx, &iam.GetPolicyInput{PolicyArn: &policyArn})
+	if err != nil {
+		return err
+	}
+	versionId := resp.Policy.DefaultVersionId
+
+	policyResult, err := svc.GetPolicyVersion(ctx, &iam.GetPolicyVersionInput{PolicyArn: &policyArn, VersionId: versionId})
+
+	if err != nil {
+		return err
+	}
+
+	decodedDocument, err := url.QueryUnescape(*policyResult.PolicyVersion.Document)
 	if err != nil {
 		return err
 	}
