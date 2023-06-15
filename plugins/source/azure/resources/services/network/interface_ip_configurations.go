@@ -9,7 +9,7 @@ import (
 	"github.com/cloudquery/plugin-sdk/transformers"
 )
 
-func interfaceIPConfigurations() *schema.Table {
+func InterfaceIPConfigurations() *schema.Table {
 	return &schema.Table{
 		Name:        "azure_network_interface_ip_configurations",
 		Resolver:    fetchInterfaceIPConfigurations,

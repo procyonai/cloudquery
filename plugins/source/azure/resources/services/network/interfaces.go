@@ -18,7 +18,7 @@ func Interfaces() *schema.Table {
 		Transform:   transformers.TransformWithStruct(&armnetwork.Interface{}, transformers.WithPrimaryKeys("ID")),
 		Columns:     schema.ColumnList{client.SubscriptionID},
 		Relations: []*schema.Table{
-			interfaceIPConfigurations(),
+			InterfaceIPConfigurations(),
 		},
 	}
 }
