@@ -6,7 +6,7 @@ import (
 	"github.com/cloudquery/plugin-sdk/transformers"
 )
 
-func containers() *schema.Table {
+func Containers() *schema.Table {
 	return &schema.Table{
 		Name:        "azure_storage_containers",
 		Resolver:    fetchContainers,

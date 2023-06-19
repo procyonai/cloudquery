@@ -6,7 +6,7 @@ import (
 	"github.com/cloudquery/plugin-sdk/transformers"
 )
 
-func blob_services() *schema.Table {
+func Blob_services() *schema.Table {
 	return &schema.Table{
 		Name:        "azure_storage_blob_services",
 		Resolver:    fetchBlobServices,

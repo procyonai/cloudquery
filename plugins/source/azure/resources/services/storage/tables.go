@@ -6,7 +6,7 @@ import (
 	"github.com/cloudquery/plugin-sdk/transformers"
 )
 
-func tables() *schema.Table {
+func Tables() *schema.Table {
 	return &schema.Table{
 		Name:        "azure_storage_tables",
 		Resolver:    fetchTables,

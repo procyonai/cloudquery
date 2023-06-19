@@ -19,9 +19,9 @@ func Accounts() *schema.Table {
 		Columns:     schema.ColumnList{client.SubscriptionID},
 
 		Relations: []*schema.Table{
-			tables(),
-			containers(),
-			blob_services(),
+			Tables(),
+			Containers(),
+			Blob_services(),
 		},
 	}
 }
