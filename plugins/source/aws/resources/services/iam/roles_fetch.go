@@ -38,67 +38,6 @@ func getRole(ctx context.Context, meta schema.ClientMeta, resource *schema.Resou
 	return nil
 }
 
-func resolveIamRolePolicies(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
-	r := resource.Item.(*types.Role)
-	cl := meta.(*client.Client)
-	svc := cl.Services().Iam
-	input := iam.ListAttachedRolePoliciesInput{
-		RoleName: r.RoleName,
-	}
-	policies := map[string]*string{}
-	paginator := iam.NewListAttachedRolePoliciesPaginator(svc, &input)
-	for paginator.HasMorePages() {
-		response, err := paginator.NextPage(ctx)
-		if err != nil {
-			if cl.IsNotFoundError(err) {
-				return nil
-			}
-			return err
-		}
-		for _, p := range response.AttachedPolicies {
-			policies[*p.PolicyArn] = p.PolicyName
-		}
-	}
-	return resource.Set("policies", policies)
-}
-
-func resolveIamRolesPoliciesDocuments(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
-	r := resource.Item.(*types.Role)
-	svc := meta.(*client.Client).Services().Iam
-	config := iam.ListAttachedRolePoliciesInput{
-		RoleName: r.RoleName,
-	}
-	response, err := svc.ListAttachedRolePolicies(ctx, &config)
-	if err != nil {
-		return err
-	}
-	policyMap := make(map[string]*map[string]any)
-	for _, p := range response.AttachedPolicies {
-		resp, err := svc.GetPolicy(ctx, &iam.GetPolicyInput{PolicyArn: p.PolicyArn})
-		if err != nil {
-			continue
-		}
-		policyResult, err := svc.GetPolicyVersion(ctx, &iam.GetPolicyVersionInput{PolicyArn: p.PolicyArn, VersionId: resp.Policy.DefaultVersionId})
-		if err != nil {
-			continue
-		}
-
-		decodedDocument, err := url.QueryUnescape(*policyResult.PolicyVersion.Document)
-		if err != nil {
-			continue
-		}
-
-		var document map[string]any
-		err = json.Unmarshal([]byte(decodedDocument), &document)
-		if err != nil {
-			continue
-		}
-		policyMap[*p.PolicyArn] = &document
-	}
-
-	return resource.Set(c.Name, policyMap)
-}
-
 func resolveRolesAssumeRolePolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
 	r := resource.Item.(*types.Role)
 	if r.AssumeRolePolicyDocument == nil {
@@ -150,10 +89,41 @@ func getRolePolicy(ctx context.Context, meta schema.ClientMeta, resource *schema
 	return nil
 }
 
-func resolveRolePoliciesPolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
+func resolveRolePolicyInlinePolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
 	r := resource.Item.(*iam.GetRolePolicyOutput)
 
 	decodedDocument, err := url.QueryUnescape(*r.PolicyDocument)
+	if err != nil {
+		return err
+	}
+
+	var document map[string]any
+	err = json.Unmarshal([]byte(decodedDocument), &document)
+	if err != nil {
+		return err
+	}
+	return resource.Set(c.Name, document)
+
+}
+
+func resolveRolePolicyAttachedPolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
+	svc := meta.(*client.Client).Services().Iam
+	resourceMap := resource.Item.(types.AttachedPolicy)
+	policyArn := *resourceMap.PolicyArn
+
+	resp, err := svc.GetPolicy(ctx, &iam.GetPolicyInput{PolicyArn: &policyArn})
+	if err != nil {
+		return err
+	}
+	versionId := resp.Policy.DefaultVersionId
+
+	policyResult, err := svc.GetPolicyVersion(ctx, &iam.GetPolicyVersionInput{PolicyArn: &policyArn, VersionId: versionId})
+
+	if err != nil {
+		return err
+	}
+
+	decodedDocument, err := url.QueryUnescape(*policyResult.PolicyVersion.Document)
 	if err != nil {
 		return err
 	}

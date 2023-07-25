@@ -77,3 +77,19 @@ func resolveIamGroupPolicyPolicyDocument(ctx context.Context, meta schema.Client
 	}
 	return resource.Set(c.Name, document)
 }
+
+func resolveIamGroupInlinePolicyPolicyDocument(ctx context.Context, meta schema.ClientMeta, resource *schema.Resource, c schema.Column) error {
+	r := resource.Item.(*iam.GetGroupPolicyOutput)
+
+	decodedDocument, err := url.QueryUnescape(*r.PolicyDocument)
+	if err != nil {
+		return err
+	}
+
+	var document map[string]any
+	err = json.Unmarshal([]byte(decodedDocument), &document)
+	if err != nil {
+		return err
+	}
+	return resource.Set(c.Name, document)
+}

@@ -28,7 +28,7 @@ func groupPolicies() *schema.Table {
 			{
 				Name:     "policy_document",
 				Type:     schema.TypeJSON,
-				Resolver: resolveIamGroupPolicyPolicyDocument,
+				Resolver: resolveIamGroupInlinePolicyPolicyDocument,
 			},
 		},
 	}

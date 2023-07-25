@@ -36,7 +36,7 @@ func RolePolicies() *schema.Table {
 			{
 				Name:     "policy_document",
 				Type:     schema.TypeJSON,
-				Resolver: resolveRolePoliciesPolicyDocument,
+				Resolver: resolveRolePolicyInlinePolicyDocument,
 			},
 		},
 	}

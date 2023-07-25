@@ -30,7 +30,7 @@ func roleAttachedPolicies() *schema.Table {
 			{
 				Name:     "policy_document",
 				Type:     schema.TypeJSON,
-				Resolver: resolveRolePoliciesPolicyDocument,
+				Resolver: resolveRolePolicyAttachedPolicyDocument,
 			},
 		},
 	}
