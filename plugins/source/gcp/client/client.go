@@ -252,6 +252,13 @@ func New(ctx context.Context, logger zerolog.Logger, s specs.Source, opts source
 	if len(projects) == 1 {
 		c.ProjectId = projects[0]
 	}
+	if len(organizations) == 1 {
+		c.OrgId = organizations[0]
+	}
+	if len(gcpSpec.FolderIDs) == 1 {
+		c.FolderId = gcpSpec.FolderIDs[0]
+	}
+
 	if gcpSpec.EnabledServicesOnly {
 		if err := c.configureEnabledServices(ctx, s.Concurrency); err != nil {
 			if status.Code(err) == codes.ResourceExhausted {

@@ -7,12 +7,12 @@ import (
 	"github.com/cloudquery/plugins/source/gcp/client"
 )
 
-func Roles() *schema.Table {
+func OrganizationRoles() *schema.Table {
 	return &schema.Table{
-		Name:        "gcp_iam_roles",
+		Name:        "gcp_iam_organization_roles",
 		Description: `https://cloud.google.com/iam/docs/reference/rest/v1/roles#Role`,
-		Resolver:    fetchRoles,
-		Multiplex:   client.ProjectMultiplexEnabledServices("iam.googleapis.com"),
+		Resolver:    fetchOrganizationRoles,
+		Multiplex:   client.OrganizationMultiplexEnabledServices("iam.googleapis.com"),
 		Transform:   transformers.TransformWithStruct(&pb.Role{}, append(client.Options(), transformers.WithPrimaryKeys("Name"))...),
 		Columns: []schema.Column{
 			{

@@ -1,19 +1,18 @@
 package iam
 
 import (
-	pb "cloud.google.com/go/iam/admin/apiv1/adminpb"
 	"github.com/cloudquery/plugin-sdk/schema"
 	"github.com/cloudquery/plugin-sdk/transformers"
 	"github.com/cloudquery/plugins/source/gcp/client"
 )
 
-func Roles() *schema.Table {
+func FolderRoleBinding() *schema.Table {
 	return &schema.Table{
-		Name:        "gcp_iam_roles",
+		Name:        "gcp_iam_folder_role_binding",
 		Description: `https://cloud.google.com/iam/docs/reference/rest/v1/roles#Role`,
-		Resolver:    fetchRoles,
-		Multiplex:   client.ProjectMultiplexEnabledServices("iam.googleapis.com"),
-		Transform:   transformers.TransformWithStruct(&pb.Role{}, append(client.Options(), transformers.WithPrimaryKeys("Name"))...),
+		Resolver:    fetchFolderRoleBinding,
+		Multiplex:   client.FolderMultiplexEnabledServices("iam.googleapis.com"),
+		Transform:   transformers.TransformWithStruct(&gcpBinding{}),
 		Columns: []schema.Column{
 			{
 				Name:     "organization_id",
@@ -23,9 +22,14 @@ func Roles() *schema.Table {
 					PrimaryKey: true,
 				},
 			},
-		},
-		Relations: []*schema.Table{
-			RolePolicies(),
+			{
+				Name:     "folder_id",
+				Type:     schema.TypeString,
+				Resolver: client.ResolveFolder,
+				CreationOptions: schema.ColumnCreationOptions{
+					PrimaryKey: true,
+				},
+			},
 		},
 	}
 }

@@ -7,13 +7,13 @@ import (
 	"github.com/cloudquery/plugins/source/gcp/client"
 )
 
-func ServiceAccountKeys() *schema.Table {
+func RolePolicies() *schema.Table {
 	return &schema.Table{
-		Name:        "gcp_iam_service_account_keys",
-		Description: `https://cloud.google.com/iam/docs/reference/rest/v1/projects.serviceAccounts.keys#ServiceAccountKey`,
-		Resolver:    fetchServiceAccountKeys,
+		Name:        "gcp_iam_role_policies",
+		Description: `https://cloud.google.com/iam/docs/reference/rest/v1/roles#Role`,
+		Resolver:    fetchRolePolicies,
 		Multiplex:   client.ProjectMultiplexEnabledServices("iam.googleapis.com"),
-		Transform:   transformers.TransformWithStruct(&pb.ServiceAccountKey{}, append(client.Options(), transformers.WithSkipFields("PrivateKeyData", "PrivateKeyType"), transformers.WithPrimaryKeys("Name"))...),
+		Transform:   transformers.TransformWithStruct(&pb.Role{}, append(client.Options(), transformers.WithPrimaryKeys("Name"))...),
 		Columns: []schema.Column{
 			{
 				Name:     "project_id",
@@ -24,9 +24,9 @@ func ServiceAccountKeys() *schema.Table {
 				},
 			},
 			{
-				Name:     "unique_id",
+				Name:     "role_name",
 				Type:     schema.TypeString,
-				Resolver: schema.ParentColumnResolver("unique_id"),
+				Resolver: schema.ParentColumnResolver("Name"),
 			},
 		},
 	}

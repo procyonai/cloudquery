@@ -80,3 +80,45 @@ func ProjectLocationMultiplexEnabledServices(service string, locations []string)
 		return l
 	}
 }
+
+func OrganizationMultiplexEnabledServices(enabledService string) func(schema.ClientMeta) []schema.ClientMeta {
+	if _, ok := GcpServices[enabledService]; !ok {
+		panic("unknown service: " + enabledService)
+	}
+
+	return func(meta schema.ClientMeta) []schema.ClientMeta {
+		cl := meta.(*Client)
+		// preallocate all clients just in case
+		l := make([]schema.ClientMeta, 0, len(cl.orgs))
+		for _, orgId := range cl.orgs {
+			// This map can only be empty if user has not opted into `EnabledServicesOnly` via the spec
+			if len(cl.EnabledServices) == 0 {
+				l = append(l, cl.withOrg(orgId))
+			} else if cl.EnabledServices[orgId] != nil && cl.EnabledServices[orgId][enabledService] != nil {
+				l = append(l, cl.withOrg(orgId))
+			}
+		}
+		return l
+	}
+}
+
+func FolderMultiplexEnabledServices(enabledService string) func(schema.ClientMeta) []schema.ClientMeta {
+	if _, ok := GcpServices[enabledService]; !ok {
+		panic("unknown service: " + enabledService)
+	}
+
+	return func(meta schema.ClientMeta) []schema.ClientMeta {
+		cl := meta.(*Client)
+		// preallocate all clients just in case
+		l := make([]schema.ClientMeta, 0, len(cl.folderIds))
+		for _, folderId := range cl.folderIds {
+			// This map can only be empty if user has not opted into `EnabledServicesOnly` via the spec
+			if len(cl.EnabledServices) == 0 {
+				l = append(l, cl.withFolder(folderId))
+			} else if cl.EnabledServices[folderId] != nil && cl.EnabledServices[folderId][enabledService] != nil {
+				l = append(l, cl.withFolder(folderId))
+			}
+		}
+		return l
+	}
+}

@@ -27,6 +27,9 @@ func Instances() *schema.Table {
 				Resolver: client.ResolveProject,
 			},
 		},
+		Relations: []*schema.Table{
+			InstancesIamPolicy(),
+		},
 	}
 }
 
