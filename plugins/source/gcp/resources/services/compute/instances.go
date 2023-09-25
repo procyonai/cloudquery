@@ -26,6 +26,11 @@ func Instances() *schema.Table {
 				Type:     schema.TypeString,
 				Resolver: client.ResolveProject,
 			},
+			{
+				Name:     "instance_id",
+				Type:     schema.TypeInt,
+				Resolver: schema.PathResolver("Id"),
+			},
 		},
 		Relations: []*schema.Table{
 			InstancesIamPolicy(),

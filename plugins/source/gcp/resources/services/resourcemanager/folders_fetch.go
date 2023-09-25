@@ -20,7 +20,7 @@ func fetchFolders(ctx context.Context, meta schema.ClientMeta, parent *schema.Re
 	}
 
 	req := &pb.ListFoldersRequest{
-		Parent: "organizations/" + c.OrgId,
+		Parent: c.OrgId,
 	}
 	it := fClient.ListFolders(ctx, req)
 	for {

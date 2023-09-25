@@ -50,14 +50,24 @@ func fetchInstanceIamPolicy(ctx context.Context, meta schema.ClientMeta, parent 
 	zoneSlice := strings.Split(*p.Zone, "/")
 	zone := zoneSlice[len(zoneSlice)-1]
 	scope := fmt.Sprintf("projects/%s", c.ProjectId)
-	if c.OrgId != "" {
-		scope = c.OrgId
-	}
-	if c.FolderId != "" {
-		scope = c.FolderId
+	fullResourceName := fmt.Sprintf("//compute.googleapis.com/projects/%s/zones/%s/instances/%s", c.ProjectId, zone, *p.Name)
+	if c.FolderId == "" && c.OrgId == "" {
+		return analyze(client, scope, fullResourceName, ctx, res)
 	}
 
-	fullResourceName := fmt.Sprintf("//compute.googleapis.com/projects/%s/zones/%s/instances/%s", c.ProjectId, zone, *p.Name)
+	if c.FolderId != "" && c.OrgId == "" {
+		scope = c.FolderId
+		return analyze(client, scope, fullResourceName, ctx, res)
+	}
+	if c.OrgId != "" && c.FolderId == "" {
+		scope = c.OrgId
+		return analyze(client, scope, fullResourceName, ctx, res)
+	}
+
+	return nil
+}
+
+func analyze(client *asset.Client, scope string, fullResourceName string, ctx context.Context, res chan<- any) error {
 	req := &assetpb.AnalyzeIamPolicyRequest{
 		AnalysisQuery: &assetpb.IamPolicyAnalysisQuery{
 			Scope: scope,
@@ -77,33 +87,5 @@ func fetchInstanceIamPolicy(ctx context.Context, meta schema.ClientMeta, parent 
 	for _, analysis := range op.MainAnalysis.AnalysisResults {
 		res <- analysis
 	}
-
 	return nil
 }
-
-// func fetchInstanceIamPolicy(ctx context.Context, meta schema.ClientMeta, parent *schema.Resource, res chan<- any) error {
-// 	c := meta.(*client.Client)
-// 	p := parent.Item.(*computepb.Instance)
-// 	computeClient, err := compute.NewService(ctx, c.ClientOptions...)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// Get the instance
-// 	zoneSlice := strings.Split(*p.Zone, "/")
-// 	zone := zoneSlice[len(zoneSlice)-1]
-// 	policy, err := computeClient.Instances.GetIamPolicy(c.ProjectId, zone, *p.Name).Do()
-// 	if err != nil {
-// 		log.Fatalf("Failed to retrieve instance iam policy: %v", err)
-// 		return err
-// 	}
-// 	var bindings []gcpBinding
-// 	for _, binding := range policy.Bindings {
-// 		bindings = append(bindings, gcpBinding{
-// 			Members: binding.Members,
-// 			Role:    binding.Role,
-// 		})
-// 	}
-// 	res <- bindings
-
-// 	return nil
-// }
