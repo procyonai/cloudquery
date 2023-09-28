@@ -2,28 +2,24 @@ package compute
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"strings"
 
 	"cloud.google.com/go/compute/apiv1/computepb"
+	iamadmin "cloud.google.com/go/iam/admin/apiv1"
+	iampb "cloud.google.com/go/iam/admin/apiv1/adminpb"
 	"github.com/cloudquery/plugin-sdk/schema"
 	"github.com/cloudquery/plugin-sdk/transformers"
 	"github.com/cloudquery/plugins/source/gcp/client"
-	"google.golang.org/api/compute/v1"
 )
 
-type gcpBinding struct {
-	Member string
-	Role   string
-}
-
-func InstancesIamPolicy() *schema.Table {
+func InstancesGrantableRoles() *schema.Table {
 	return &schema.Table{
-		Name:        "gcp_iam_compute_instance_role_binding",
+		Name:        "gcp_iam_compute_instance_grantable_roles",
 		Description: `https://cloud.google.com/compute/docs/reference/rest/v1/instances/getIamPolicy`,
-		Resolver:    fetchInstanceIamPolicy,
+		Resolver:    fetchInstanceGrantableRoles,
 		Multiplex:   client.ProjectMultiplexEnabledServices("iam.googleapis.com"),
-		Transform:   transformers.TransformWithStruct(&gcpBinding{}),
+		Transform:   transformers.TransformWithStruct(&iampb.Role{}),
 		Columns: []schema.Column{
 			{
 				Name:     "project_id",
@@ -42,31 +38,37 @@ func InstancesIamPolicy() *schema.Table {
 	}
 }
 
-func fetchInstanceIamPolicy(ctx context.Context, meta schema.ClientMeta, parent *schema.Resource, res chan<- any) error {
+func fetchInstanceGrantableRoles(ctx context.Context, meta schema.ClientMeta, parent *schema.Resource, res chan<- any) error {
 	c := meta.(*client.Client)
 	p := parent.Item.(*computepb.Instance)
-	computeClient, err := compute.NewService(ctx, c.ClientOptions...)
+	nextPageToken := ""
+	iamClient, err := iamadmin.NewIamClient(ctx, c.ClientOptions...)
 	if err != nil {
 		return err
 	}
 	// Get the instance
 	zoneSlice := strings.Split(*p.Zone, "/")
 	zone := zoneSlice[len(zoneSlice)-1]
-	policy, err := computeClient.Instances.GetIamPolicy(c.ProjectId, zone, *p.Name).Do()
-	if err != nil {
-		log.Fatalf("Failed to retrieve instance iam policy: %v", err)
-		return err
-	}
-	var bindings []gcpBinding
-	for _, binding := range policy.Bindings {
-		for _, member := range binding.Members {
-			bindings = append(bindings, gcpBinding{
-				Member: member,
-				Role:   binding.Role,
-			})
+
+	fullResourceName := fmt.Sprintf("//compute.googleapis.com/projects/%s/zones/%s/instances/%s", c.ProjectId, zone, *p.Name)
+	for {
+		req := &iampb.QueryGrantableRolesRequest{
+			FullResourceName: fullResourceName,
+			PageSize:         1000,
+			PageToken:        nextPageToken,
 		}
+		resp, err := iamClient.QueryGrantableRoles(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		res <- resp.Roles
+
+		if resp.NextPageToken == "" {
+			break
+		}
+		nextPageToken = resp.NextPageToken
 	}
-	res <- bindings
 
 	return nil
 }

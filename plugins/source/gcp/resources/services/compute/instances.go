@@ -34,6 +34,7 @@ func Instances() *schema.Table {
 		},
 		Relations: []*schema.Table{
 			InstancesIamPolicy(),
+			InstancesGrantableRoles(),
 		},
 	}
 }
