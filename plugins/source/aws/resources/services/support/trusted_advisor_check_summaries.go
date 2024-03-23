@@ -3,7 +3,6 @@ package support
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/support"
 	"github.com/aws/aws-sdk-go-v2/service/support/types"
 	"github.com/cloudquery/cloudquery/plugins/source/aws/client"
@@ -36,7 +35,7 @@ func fetchTrustedAdvisorCheckSummaries(ctx context.Context, meta schema.ClientMe
 	}
 	svc := c.Services().Support
 	check := parent.Item.(types.TrustedAdvisorCheckDescription)
-	input := support.DescribeTrustedAdvisorCheckSummariesInput{CheckIds: []string{aws.ToString(check.Id)}}
+	input := support.DescribeTrustedAdvisorCheckSummariesInput{CheckIds: []*string{check.Id}}
 
 	response, err := svc.DescribeTrustedAdvisorCheckSummaries(ctx, &input)
 	if err != nil {
@@ -55,7 +54,7 @@ func mockCheckSummaries(check types.TrustedAdvisorCheckDescription, m *mocks.Moc
 		return err
 	}
 
-	input := support.DescribeTrustedAdvisorCheckSummariesInput{CheckIds: []string{aws.ToString(check.Id)}}
+	input := support.DescribeTrustedAdvisorCheckSummariesInput{CheckIds: []*string{check.Id}}
 	m.EXPECT().DescribeTrustedAdvisorCheckSummaries(gomock.Any(), &input).Return(&support.DescribeTrustedAdvisorCheckSummariesOutput{Summaries: summaries}, nil)
 	return nil
 }

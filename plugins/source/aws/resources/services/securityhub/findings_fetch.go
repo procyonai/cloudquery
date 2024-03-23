@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/securityhub"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/cloudquery/cloudquery/plugins/source/aws/client"
 	"github.com/cloudquery/plugin-sdk/schema"
 )
@@ -12,7 +13,7 @@ func fetchFindings(ctx context.Context, meta schema.ClientMeta, parent *schema.R
 	c := meta.(*client.Client)
 	svc := c.Services().Securityhub
 	config := securityhub.GetFindingsInput{
-		MaxResults: 100,
+		MaxResults: aws.Int32(100),
 	}
 	p := securityhub.NewGetFindingsPaginator(svc, &config)
 	for p.HasMorePages() {

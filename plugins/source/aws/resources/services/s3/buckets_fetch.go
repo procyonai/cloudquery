@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/cloudquery/cloudquery/plugins/source/aws/client"
@@ -310,10 +311,10 @@ func resolveBucketPublicAccessBlock(ctx context.Context, meta schema.ClientMeta,
 		}
 		return err
 	}
-	resource.BlockPublicAcls = publicAccessOutput.PublicAccessBlockConfiguration.BlockPublicAcls
-	resource.BlockPublicPolicy = publicAccessOutput.PublicAccessBlockConfiguration.BlockPublicPolicy
-	resource.IgnorePublicAcls = publicAccessOutput.PublicAccessBlockConfiguration.IgnorePublicAcls
-	resource.RestrictPublicBuckets = publicAccessOutput.PublicAccessBlockConfiguration.RestrictPublicBuckets
+	resource.BlockPublicAcls = aws.ToBool(publicAccessOutput.PublicAccessBlockConfiguration.BlockPublicAcls)
+	resource.BlockPublicPolicy = aws.ToBool(publicAccessOutput.PublicAccessBlockConfiguration.BlockPublicPolicy)
+	resource.IgnorePublicAcls = aws.ToBool(publicAccessOutput.PublicAccessBlockConfiguration.IgnorePublicAcls)
+	resource.RestrictPublicBuckets = aws.ToBool(publicAccessOutput.PublicAccessBlockConfiguration.RestrictPublicBuckets)
 	return nil
 }
 
