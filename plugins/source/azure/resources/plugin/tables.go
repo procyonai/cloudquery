@@ -175,6 +175,7 @@ func tables() []*schema.Table {
 		desktopvirtualization.HostPools(),
 		devhub.Workflow(),
 		devops.PipelineTemplateDefinitions(),
+		devops.Pipelines(),
 		dns.Zones(),
 		dnsresolver.DnsForwardingRulesets(),
 		dnsresolver.DnsResolvers(),

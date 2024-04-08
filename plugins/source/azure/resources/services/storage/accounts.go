@@ -22,6 +22,8 @@ func Accounts() *schema.Table {
 			Tables(),
 			Containers(),
 			Blob_services(),
+			File_services(),
+			File_shares(),
 		},
 	}
 }
