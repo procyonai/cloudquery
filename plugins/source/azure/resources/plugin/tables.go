@@ -24,6 +24,7 @@ import (
 	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/containerregistry"
 	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/containerservice"
 	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/cosmos"
+	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/cosmosforpostgresql"
 	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/costmanagement"
 	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/customerinsights"
 	"github.com/cloudquery/cloudquery/plugins/source/azure/resources/services/dashboard"
@@ -147,6 +148,8 @@ func tables() []*schema.Table {
 		compute.VirtualMachineScaleSets(),
 		compute.VirtualMachines(),
 		cosmos.DatabaseAccounts(),
+		cosmos.CassandraClusters(),
+		cosmosforpostgresql.Clusters(),
 		costmanagement.Views(),
 		confluent.MarketplaceAgreements(),
 		connectedvmware.Clusters(),
